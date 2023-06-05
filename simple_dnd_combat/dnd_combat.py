@@ -158,6 +158,8 @@ class App:
                             if pygame.key.get_mods() & pygame.KMOD_CTRL:  # Check if Ctrl key is pressed
                                 new_sprite.player = True
                                 new_sprite.color = (0, 0, 255)
+                            new_sprite.check_hover(event)
+                            new_sprite.dragging = True
                             self.sprites.append(new_sprite)
                     elif event.button == 3:  # Right-click to remove a sprite
                         for sprite in self.sprites:
