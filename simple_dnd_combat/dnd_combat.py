@@ -4,14 +4,13 @@ import pygame
 import random
 import sys
 
-
 import tkinter as tk
 from tkinter import filedialog
 
 root = tk.Tk()
 root.withdraw()
 
-file_path = filedialog.askopenfilename(initialdir=os.getcwd(), title="Select file",)
+file_path = filedialog.askopenfilename(initialdir=os.getcwd(), title="Select file")
 
 class Sprite:
     def __init__(self, pos, radius, color):
@@ -62,7 +61,6 @@ class Sprite:
         if self.cursed:
             pygame.draw.circle(screen, (255, 0, 255), self.pos, self.radius + ringsize, width=ringsize)
 
-
         screen.blit(inverted_text_surface, text_rect)
 
     def check_hover(self, event):
@@ -71,6 +69,7 @@ class Sprite:
             self.hovered = True
         else:
             self.hovered = False
+
     def update_radius(self, delta):
         self.radius += delta
 
@@ -79,21 +78,15 @@ class App:
         pygame.init()
         self.background_image = pygame.image.load(file_path)
         self.background_rect = self.background_image.get_rect()
-        #get monitor size
+
         infoObject = pygame.display.Info()
         self.monitor_width = infoObject.current_w
         self.monitor_height = infoObject.current_h
-        #get size of background image
+
         x, y = self.background_image.get_size()
-        #get aspect ratio of background image
         self.aspect_ratio = x / y
-        #set initial screen size
-        # Set up the display
 
-
-        #if height is greater, set screen height to 80% of monitor height
         self.screen_height = int(self.monitor_height * 0.9)
-        #set screen width to 80% of screen height
         self.screen_width = int(self.screen_height * self.aspect_ratio)
         self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
         pygame.display.set_caption("Add Movable Sprite")
@@ -102,11 +95,7 @@ class App:
 
         self.clock = pygame.time.Clock()
 
-        # Load the background image
-
-        # Initialize the sprite list
         self.sprites = []
-
 
     def update_sprite_positions(self):
         width_ratio = self.screen_width / self.initial_screen_width
@@ -122,28 +111,24 @@ class App:
         self.initial_screen_height = self.screen_height
 
     def run(self):
-        # Game loop
         running = True
         sprite_radius = 20
         while running:
             self.screen.fill((255, 255, 255))
-            # Draw the background
             resized_background = pygame.transform.scale(self.background_image, (self.screen_width, self.screen_height))
             self.screen.blit(resized_background, (0, 0))
 
-            # Draw the sprites
             for sprite in self.sprites:
                 sprite.draw(self.screen)
 
             pygame.display.flip()
             self.clock.tick(60)
 
-            # Event handling
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
                 elif event.type == pygame.MOUSEBUTTONDOWN:
-                    if event.button == 1:  # Left-click to add or start dragging a sprite
+                    if event.button == 1:
                         sprite_pos = event.pos
                         sprite_color = (255, 0, 0)
                         clicked_sprite = None
@@ -155,19 +140,19 @@ class App:
                                 break
                         if clicked_sprite is None:
                             new_sprite = Sprite(sprite_pos, sprite_radius, sprite_color)
-                            if pygame.key.get_mods() & pygame.KMOD_CTRL:  # Check if Ctrl key is pressed
+                            if pygame.key.get_mods() & pygame.KMOD_CTRL:
                                 new_sprite.player = True
                                 new_sprite.color = (0, 0, 255)
                             new_sprite.check_hover(event)
                             new_sprite.dragging = True
                             self.sprites.append(new_sprite)
-                    elif event.button == 3:  # Right-click to remove a sprite
+                    elif event.button == 3:
                         for sprite in self.sprites:
                             sprite_center = pygame.math.Vector2(sprite.pos)
                             if sprite_center.distance_to(pygame.math.Vector2(event.pos)) <= sprite.radius:
                                 self.sprites.remove(sprite)
                 elif event.type == pygame.MOUSEBUTTONUP:
-                    if event.button == 1:  # Left-click release to stop dragging
+                    if event.button == 1:
                         for sprite in self.sprites:
                             if sprite.dragging:
                                 sprite.dragging = False
@@ -185,10 +170,6 @@ class App:
                             if sprite.hovered:
                                 hovered_sprite = sprite
                                 break
-                        # check if letter is already in use
-                        # if letter is in use add a number to the end of it
-                        # if letter and number is in use add another incrementing number to the end of it
-                        # repeat until letter and number combination is unique
                         if hovered_sprite is not None:
                             letter_in_use = True
                             number_in_use = True
@@ -222,11 +203,9 @@ class App:
                         for sprite in self.sprites:
                             if sprite.hovered:
                                 sprite.cursed = not sprite.cursed
-
-
                 elif event.type == pygame.MOUSEWHEEL:
                     delta = event.y
-                    if pygame.key.get_mods() & pygame.KMOD_CTRL:  # Check if Ctrl key is pressed
+                    if pygame.key.get_mods() & pygame.KMOD_CTRL:
                         for sprite in self.sprites:
                             sprite.update_radius(delta)
                             sprite_radius = sprite.radius
@@ -236,11 +215,6 @@ class App:
                                 if sprite.hovered:
                                     sprite.update_radius(delta)
                                     sprite_radius = sprite.radius
-                elif event.type == pygame.VIDEORESIZE:
-                    self.screen_width = event.w
-                    self.screen_height = event.h
-                    self.screen = pygame.display.set_mode((self.screen_width, self.screen_height), pygame.RESIZABLE)
-                    self.update_sprite_positions()
 
         pygame.quit()
 
