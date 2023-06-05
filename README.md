@@ -51,7 +51,7 @@ To build the executable file using `venv` and `pyinstaller`, follow these steps:
 	```
 4. Build the executable:
 	```
-	pyinstaller --onefile main.py
+	pyinstaller --onefile simple_dnd_combat/dnd_combat.py
 	```
 5. The executable file will be created in the `dist` directory.
 
