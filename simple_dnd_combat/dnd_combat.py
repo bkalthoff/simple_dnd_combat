@@ -78,7 +78,7 @@ class App:
         pygame.init()
         self.background_image = pygame.image.load(file_path)
         self.background_rect = self.background_image.get_rect()
-
+        
         infoObject = pygame.display.Info()
         self.monitor_width = infoObject.current_w
         self.monitor_height = infoObject.current_h
@@ -88,7 +88,7 @@ class App:
 
         self.screen_height = int(self.monitor_height * 0.9)
         self.screen_width = int(self.screen_height * self.aspect_ratio)
-        self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
+        self.screen = pygame.display.set_mode((self.screen_width, self.screen_height), pygame.RESIZABLE)
         pygame.display.set_caption("Add Movable Sprite")
         self.initial_screen_height = self.screen_height
         self.initial_screen_width = self.screen_width
@@ -114,9 +114,24 @@ class App:
         running = True
         sprite_radius = 20
         while running:
-            self.screen.fill((255, 255, 255))
-            resized_background = pygame.transform.scale(self.background_image, (self.screen_width, self.screen_height))
-            self.screen.blit(resized_background, (0, 0))
+            self.screen.fill((0, 0, 0))
+
+            # Calculate new dimensions for the background image
+            img_width, img_height = self.background_image.get_size()
+            img_aspect_ratio = img_width / img_height
+
+            if self.screen_width / self.screen_height > img_aspect_ratio:
+                new_height = self.screen_height
+                new_width = int(new_height * img_aspect_ratio)
+            else:
+                new_width = self.screen_width
+                new_height = int(new_width / img_aspect_ratio)
+
+            # Scale the background image and blit it to the screen
+            resized_background = pygame.transform.smoothscale(self.background_image, (new_width, new_height))
+            x_offset = (self.screen_width - new_width) // 2
+            y_offset = (self.screen_height - new_height) // 2
+            self.screen.blit(resized_background, (x_offset, y_offset))
 
             for sprite in self.sprites:
                 sprite.draw(self.screen)
@@ -127,6 +142,10 @@ class App:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
+                elif event.type == pygame.VIDEORESIZE:
+                    self.screen_width, self.screen_height = event.w, event.h
+                    self.screen = pygame.display.set_mode((self.screen_width, self.screen_height), pygame.RESIZABLE)
+                    self.update_sprite_positions()
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:
                         sprite_pos = event.pos
