@@ -113,7 +113,7 @@ class App:
                 int(sprite.pos[0] * width_ratio),
                 int(sprite.pos[1] * height_ratio)
             )
-            sprite.radius = sprite.radius * width_ratio
+            sprite.radius = int(sprite.radius * width_ratio) 
         self.initial_screen_width = self.screen_width
         self.initial_screen_height = self.screen_height
 
