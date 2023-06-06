@@ -103,6 +103,8 @@ class App:
         self.start_point = None
         self.end_point = None
         self.grid_drawn = False
+        self.grid_surface = pygame.Surface((self.screen_width, self.screen_height), pygame.SRCALPHA)
+        self.grid_surface.set_alpha(255)
 
     def update_sprite_positions(self):
         width_ratio = self.screen_width / self.initial_screen_width
@@ -139,16 +141,22 @@ class App:
             y_offset = (self.screen_height - new_height) // 2
             self.screen.blit(resized_background, (x_offset, y_offset))
 
-            if self.drawing_line and self.start_point and self.end_point:
-                pygame.draw.line(self.screen, (255, 255, 255), self.start_point, self.end_point, 1)
+            # Update grid_surface size and position
+            resized_grid_surface = pygame.Surface((new_width, new_height), pygame.SRCALPHA)
+
+            if self.drawing_line:
+                pygame.draw.line(self.screen, self.line_color, self.start_point, self.end_point, 1)
             if self.grid_drawn:
+                self.grid_surface.fill((0, 0, 0, 0))
                 grid_size = int(math.sqrt((self.end_point[0] - self.start_point[0]) ** 2 + (self.end_point[1] - self.start_point[1]) ** 2))
                 if grid_size == 0:
                     grid_size = 50
-                for x in range(0, self.screen_width, grid_size):
-                    pygame.draw.line(self.screen, (220, 220, 220, 48), (x, 0), (x, self.screen_height), 1)
-                for y in range(0, self.screen_height, grid_size):
-                    pygame.draw.line(self.screen, (220, 220, 220, 48), (0, y), (self.screen_width, y), 1)
+                for x in range(0, new_width, grid_size):
+                    pygame.draw.line(resized_grid_surface, (220, 220, 220), (x, 0), (x, new_height), 1)
+                for y in range(0, new_height, grid_size):
+                    pygame.draw.line(resized_grid_surface, (220, 220, 220), (0, y), (new_width, y), 1)
+
+            self.screen.blit(resized_grid_surface, (x_offset, y_offset))
 
 
             for sprite in self.sprites:
