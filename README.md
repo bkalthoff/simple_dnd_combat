@@ -15,6 +15,7 @@ I might keep adding to it, if you want to contribute, feel free to open a PR.
 - **Delete**: Toggle the "dead" state of the selected unit.
 - **1**: Toggle the "prone" state of the selected unit.
 - **2**: Toggle the "cursed" state of the selected unit.
+- **ALT + Left-click and drag**: Adds a grid overlay
 
 ## Usage
 
