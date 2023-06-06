@@ -3,6 +3,7 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 import random
 import sys
+import math
 
 import tkinter as tk
 from tkinter import filedialog
@@ -97,6 +98,12 @@ class App:
 
         self.sprites = []
 
+        self.drawing_line = False
+        self.line_color = (255, 0, 0)
+        self.start_point = None
+        self.end_point = None
+        self.grid_drawn = False
+
     def update_sprite_positions(self):
         width_ratio = self.screen_width / self.initial_screen_width
         height_ratio = self.screen_height / self.initial_screen_height
@@ -115,7 +122,6 @@ class App:
         sprite_radius = 20
         while running:
             self.screen.fill((0, 0, 0))
-
             # Calculate new dimensions for the background image
             img_width, img_height = self.background_image.get_size()
             img_aspect_ratio = img_width / img_height
@@ -133,6 +139,18 @@ class App:
             y_offset = (self.screen_height - new_height) // 2
             self.screen.blit(resized_background, (x_offset, y_offset))
 
+            if self.drawing_line and self.start_point and self.end_point:
+                pygame.draw.line(self.screen, (255, 255, 255), self.start_point, self.end_point, 1)
+            if self.grid_drawn:
+                grid_size = int(math.sqrt((self.end_point[0] - self.start_point[0]) ** 2 + (self.end_point[1] - self.start_point[1]) ** 2))
+                if grid_size == 0:
+                    grid_size = 50
+                for x in range(0, self.screen_width, grid_size):
+                    pygame.draw.line(self.screen, (220, 220, 220, 48), (x, 0), (x, self.screen_height), 1)
+                for y in range(0, self.screen_height, grid_size):
+                    pygame.draw.line(self.screen, (220, 220, 220, 48), (0, y), (self.screen_width, y), 1)
+
+
             for sprite in self.sprites:
                 sprite.draw(self.screen)
 
@@ -147,7 +165,11 @@ class App:
                     self.screen = pygame.display.set_mode((self.screen_width, self.screen_height), pygame.RESIZABLE)
                     self.update_sprite_positions()
                 elif event.type == pygame.MOUSEBUTTONDOWN:
-                    if event.button == 1:
+                    if event.button == 1 and pygame.key.get_mods() & pygame.KMOD_ALT:
+                        self.drawing_line = True
+                        self.start_point = event.pos
+                        self.end_point = event.pos
+                    elif event.button == 1:
                         sprite_pos = event.pos
                         sprite_color = (255, 0, 0)
                         clicked_sprite = None
@@ -175,7 +197,12 @@ class App:
                         for sprite in self.sprites:
                             if sprite.dragging:
                                 sprite.dragging = False
+                        if self.drawing_line:
+                            self.drawing_line = False
+                            self.grid_drawn = True
                 elif event.type == pygame.MOUSEMOTION:
+                    if self.drawing_line:
+                        self.end_point = event.pos
                     for sprite in self.sprites:
                         if sprite.dragging:
                             sprite.pos = event.pos
