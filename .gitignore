@@ -3,3 +3,4 @@ dist/*
 myenv/*
 testmap.jpg
 dnd_combat.spec
+venv/*

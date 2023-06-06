@@ -3,6 +3,7 @@ os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 import random
 import sys
+import math
 
 import tkinter as tk
 from tkinter import filedialog
@@ -78,7 +79,7 @@ class App:
         pygame.init()
         self.background_image = pygame.image.load(file_path)
         self.background_rect = self.background_image.get_rect()
-
+        
         infoObject = pygame.display.Info()
         self.monitor_width = infoObject.current_w
         self.monitor_height = infoObject.current_h
@@ -88,7 +89,7 @@ class App:
 
         self.screen_height = int(self.monitor_height * 0.9)
         self.screen_width = int(self.screen_height * self.aspect_ratio)
-        self.screen = pygame.display.set_mode((self.screen_width, self.screen_height))
+        self.screen = pygame.display.set_mode((self.screen_width, self.screen_height), pygame.RESIZABLE)
         pygame.display.set_caption("Add Movable Sprite")
         self.initial_screen_height = self.screen_height
         self.initial_screen_width = self.screen_width
@@ -96,6 +97,14 @@ class App:
         self.clock = pygame.time.Clock()
 
         self.sprites = []
+
+        self.drawing_line = False
+        self.line_color = (255, 0, 0)
+        self.start_point = None
+        self.end_point = None
+        self.grid_drawn = False
+        self.grid_surface = pygame.Surface((self.screen_width, self.screen_height), pygame.SRCALPHA)
+        self.grid_surface.set_alpha(255)
 
     def update_sprite_positions(self):
         width_ratio = self.screen_width / self.initial_screen_width
@@ -106,7 +115,7 @@ class App:
                 int(sprite.pos[0] * width_ratio),
                 int(sprite.pos[1] * height_ratio)
             )
-            sprite.radius = sprite.radius * width_ratio
+            sprite.radius = int(sprite.radius * width_ratio) 
         self.initial_screen_width = self.screen_width
         self.initial_screen_height = self.screen_height
 
@@ -114,9 +123,41 @@ class App:
         running = True
         sprite_radius = 20
         while running:
-            self.screen.fill((255, 255, 255))
-            resized_background = pygame.transform.scale(self.background_image, (self.screen_width, self.screen_height))
-            self.screen.blit(resized_background, (0, 0))
+            self.screen.fill((0, 0, 0))
+            # Calculate new dimensions for the background image
+            img_width, img_height = self.background_image.get_size()
+            img_aspect_ratio = img_width / img_height
+
+            if self.screen_width / self.screen_height > img_aspect_ratio:
+                new_height = self.screen_height
+                new_width = int(new_height * img_aspect_ratio)
+            else:
+                new_width = self.screen_width
+                new_height = int(new_width / img_aspect_ratio)
+
+            # Scale the background image and blit it to the screen
+            resized_background = pygame.transform.smoothscale(self.background_image, (new_width, new_height))
+            x_offset = (self.screen_width - new_width) // 2
+            y_offset = (self.screen_height - new_height) // 2
+            self.screen.blit(resized_background, (x_offset, y_offset))
+
+            # Update grid_surface size and position
+            resized_grid_surface = pygame.Surface((new_width, new_height), pygame.SRCALPHA)
+
+            if self.drawing_line:
+                pygame.draw.line(self.screen, self.line_color, self.start_point, self.end_point, 1)
+            if self.grid_drawn:
+                self.grid_surface.fill((0, 0, 0, 0))
+                grid_size = int(math.sqrt((self.end_point[0] - self.start_point[0]) ** 2 + (self.end_point[1] - self.start_point[1]) ** 2))
+                if grid_size == 0:
+                    grid_size = 50
+                for x in range(0, new_width, grid_size):
+                    pygame.draw.line(resized_grid_surface, (220, 220, 220), (x, 0), (x, new_height), 1)
+                for y in range(0, new_height, grid_size):
+                    pygame.draw.line(resized_grid_surface, (220, 220, 220), (0, y), (new_width, y), 1)
+
+            self.screen.blit(resized_grid_surface, (x_offset, y_offset))
+
 
             for sprite in self.sprites:
                 sprite.draw(self.screen)
@@ -127,8 +168,16 @@ class App:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     running = False
+                elif event.type == pygame.VIDEORESIZE:
+                    self.screen_width, self.screen_height = event.w, event.h
+                    self.screen = pygame.display.set_mode((self.screen_width, self.screen_height), pygame.RESIZABLE)
+                    self.update_sprite_positions()
                 elif event.type == pygame.MOUSEBUTTONDOWN:
-                    if event.button == 1:
+                    if event.button == 1 and pygame.key.get_mods() & pygame.KMOD_ALT:
+                        self.drawing_line = True
+                        self.start_point = event.pos
+                        self.end_point = event.pos
+                    elif event.button == 1:
                         sprite_pos = event.pos
                         sprite_color = (255, 0, 0)
                         clicked_sprite = None
@@ -156,7 +205,12 @@ class App:
                         for sprite in self.sprites:
                             if sprite.dragging:
                                 sprite.dragging = False
+                        if self.drawing_line:
+                            self.drawing_line = False
+                            self.grid_drawn = True
                 elif event.type == pygame.MOUSEMOTION:
+                    if self.drawing_line:
+                        self.end_point = event.pos
                     for sprite in self.sprites:
                         if sprite.dragging:
                             sprite.pos = event.pos
